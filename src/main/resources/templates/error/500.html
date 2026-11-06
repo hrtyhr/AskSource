@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('服务异常')}"></head>
+<body>
+<header th:replace="~{fragments/common :: header}"></header>
+<main class="container error-page">
+    <div>
+        <div class="error-code">500</div>
+        <h1>服务暂时不可用</h1>
+        <p>服务器处理请求时遇到问题，请稍后重试。</p>
+        <a class="btn btn-primary" th:href="@{/}">返回首页</a>
+    </div>
+</main>
+<footer th:replace="~{fragments/common :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('用户管理')}"></head>
+<body>
+<header th:replace="~{fragments/common :: header}"></header>
+<nav th:replace="~{fragments/common :: adminNav}"></nav>
+
+<main class="page" style="padding-top: 8px;">
+    <div class="container">
+        <div th:replace="~{fragments/common :: flash}"></div>
+
+        <div class="page-head">
+            <div>
+                <h1>用户管理</h1>
+                <p>启用或禁用社区账号。</p>
+            </div>
+        </div>
+
+        <form class="filter-bar" th:action="@{/admin/users}" method="get">
+            <div class="search-inline" style="flex: 1;">
+                <input class="input" style="max-width: 340px;" type="search" name="q"
+                       th:value="${q}" placeholder="搜索用户名、昵称或邮箱">
+                <button class="btn btn-primary btn-sm" type="submit">搜索</button>
+            </div>
+            <span class="muted small" th:text="'共 ' + ${users.totalElements} + ' 个账号'">总数</span>
+        </form>
+
+        <section class="panel">
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>用户</th>
+                        <th>邮箱</th>
+                        <th>角色</th>
+                        <th>状态</th>
+                        <th>加入时间</th>
+                        <th style="text-align: right;">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="user : ${users.content}">
+                        <td>
+                            <div class="row" style="gap: 8px;">
+                                <span class="avatar avatar-sm"
+                                      th:text="${#strings.substring(user.displayName, 0, 1)}">U</span>
+                                <div>
+                                    <a th:href="@{/users/{u}(u=${user.username})}" th:text="${user.displayName}">用户</a>
+                                    <div class="muted small" th:text="'@' + ${user.username}">@user</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td th:text="${user.email}">邮箱</td>
+                        <td>
+                            <span class="status-badge"
+                                  th:classappend="${user.admin} ? ' status-hidden'"
+                                  th:text="${user.admin} ? '管理员' : '用户'">角色</span>
+                        </td>
+                        <td>
+                            <span class="status-badge"
+                                  th:classappend="${user.enabled} ? ' status-published' : ' status-deleted'"
+                                  th:text="${user.enabled} ? '启用' : '禁用'">状态</span>
+                        </td>
+                        <td th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd')}">时间</td>
+                        <td class="actions">
+                            <span class="muted small"
+                                  th:if="${currentUser.username == user.username}">当前账号</span>
+                            <form th:if="${currentUser.username != user.username}"
+                                  th:action="@{/admin/users/{id}/toggle(id=${user.id})}" method="post"
+                                  th:attr="data-confirm=${user.enabled ? '确定禁用该账号吗？' : '确定启用该账号吗？'}">
+                                <button class="btn btn-sm"
+                                        th:classappend="${user.enabled} ? ' btn-danger' : ' btn-secondary'"
+                                        th:text="${user.enabled} ? '禁用' : '启用'">操作</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(users.content)}">
+                        <td colspan="6" class="muted">没有找到用户</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <nav th:replace="~{fragments/common :: pagination(${pageLinks})}"></nav>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/common :: footer}"></footer>
+</body>
+</html>

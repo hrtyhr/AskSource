@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('搜索')}"></head>
+<body>
+<header th:replace="~{fragments/common :: header}"></header>
+
+<main class="page">
+    <div class="container">
+        <div class="page-head">
+            <div>
+                <h1>关键词搜索</h1>
+                <p th:if="${q != null}" th:text="'找到 ' + ${posts.totalElements} + ' 条与“' + ${q} + '”相关的帖子'">搜索结果</p>
+                <p th:if="${q == null}">输入标题、正文或标签中的关键词。</p>
+            </div>
+            <a class="btn btn-secondary" th:if="${q != null}" th:href="@{/ai/search(q=${q})}">改用语义搜索</a>
+        </div>
+
+        <form class="filter-bar" th:action="@{/search}" method="get" style="display: block;">
+            <div class="search-inline">
+                <input class="input" type="search" name="q" th:value="${q}"
+                       placeholder="例如：Spring AI 向量索引" autofocus>
+                <button class="btn btn-primary" type="submit">搜索</button>
+            </div>
+        </form>
+
+        <div th:if="${q != null and #lists.isEmpty(posts.content)}" class="empty-state">
+            <h3>没有找到相关帖子</h3>
+            <p>尝试更短的关键词，或使用 <a th:href="@{/ai/search(q=${q})}">AI 语义搜索</a>。</p>
+        </div>
+
+        <div th:each="post : ${posts.content}">
+            <article th:replace="~{fragments/common :: postCard(${post})}"></article>
+        </div>
+
+        <nav th:replace="~{fragments/common :: pagination(${pageLinks})}"></nav>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/common :: footer}"></footer>
+</body>
+</html>

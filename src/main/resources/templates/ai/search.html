@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('语义搜索')}"></head>
+<body>
+<header th:replace="~{fragments/common :: header}"></header>
+
+<main>
+    <section class="ai-hero">
+        <div class="container">
+            <span class="eyebrow">SEMANTIC RETRIEVAL</span>
+            <h1>按意思找，而不是按字面找</h1>
+            <p>用自然语言描述问题，系统在社区内容的向量索引中检索语义相近的帖子与回复。没有配置模型时自动降级为关键词搜索。</p>
+            <form class="semantic-form" th:action="@{/ai/search}" method="get">
+                <input type="search" name="q" th:value="${query}" maxlength="200"
+                       placeholder="例如：无 Key 环境下如何初始化 Redis 向量索引？" autofocus>
+                <button class="btn btn-primary" type="submit">语义检索</button>
+            </form>
+            <div class="row wrap" style="margin-top: 12px; gap: 8px;">
+                <span class="ai-status-pill" th:classappend="${!aiAvailable} ? 'is-off'"
+                      th:text="${aiAvailable} ? '语义检索可用' : '关键词降级模式'">状态</span>
+                <span class="muted small" th:text="${aiStatus}">状态说明</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="page">
+        <div class="container">
+            <div th:if="${query == null}" class="empty-state">
+                <h3>输入一个问题开始检索</h3>
+                <p>语义搜索会理解“如何避免向量索引启动失败”与“无 Key 时 embedding 初始化报错”之间的关联。</p>
+                <a class="btn btn-secondary" style="margin-top: 14px;" th:href="@{/search}">使用普通关键词搜索</a>
+            </div>
+
+            <div th:if="${query != null}">
+                <div class="page-head">
+                    <div>
+                        <h1 style="font-size: 1.45rem;" th:text="'“' + ${query} + '” 的检索结果'">检索结果</h1>
+                        <p th:text="'共 ' + ${#lists.size(result.sources)} + ' 条相关内容'">结果数量</p>
+                    </div>
+                    <a class="btn btn-ghost" th:href="@{/search(q=${query})}">改用关键词搜索</a>
+                </div>
+
+                <div th:if="${result.degraded}" class="chat-degraded" style="margin-bottom: 18px;">
+                    <strong>降级提示：</strong><span th:text="${result.message}">已降级</span>
+                </div>
+                <div th:if="${!result.degraded}" class="flash flash-success" style="margin-bottom: 18px;">
+                    已使用语义向量检索，结果按相似度排序。
+                </div>
+
+                <div th:if="${#lists.isEmpty(result.sources)}" class="empty-state">
+                    <h3>没有找到相关内容</h3>
+                    <p>换一种描述方式，或尝试更具体的技术关键词。</p>
+                    <a class="btn btn-secondary" style="margin-top: 14px;" th:href="@{/ai}">向 AI 助手提问</a>
+                </div>
+
+                <div class="result-list">
+                    <article class="result-card" th:each="source : ${result.sources}">
+                        <div class="row wrap">
+                            <span class="chip"
+                                  th:text="${source.sourceType == 'REPLY'} ? '回复' : '帖子'">来源</span>
+                            <span class="muted small"
+                                  th:text="${source.sourceType == 'REPLY'} ? '来自帖子回复' : '来自帖子正文'">类型</span>
+                        </div>
+                        <h3>
+                            <a th:href="${source.url}" th:text="${source.title}">来源标题</a>
+                        </h3>
+                        <p class="result-snippet" th:text="${source.snippet}">内容摘要</p>
+                        <div class="result-meta">
+                            <a th:href="${source.url}"
+                               th:text="${source.sourceType == 'REPLY'} ? '查看原回复' : '阅读原帖'">打开来源</a>
+                            <span class="score-badge" th:if="${source.score > 0}"
+                                  th:text="'相似度 ' + ${#numbers.formatDecimal(source.score, 1, 2)}">相似度</span>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/common :: footer}"></footer>
+</body>
+</html>

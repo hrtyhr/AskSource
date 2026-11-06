@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('分类管理')}"></head>
+<body>
+<header th:replace="~{fragments/common :: header}"></header>
+<nav th:replace="~{fragments/common :: adminNav}"></nav>
+
+<main class="page" style="padding-top: 8px;">
+    <div class="container">
+        <div th:replace="~{fragments/common :: flash}"></div>
+
+        <div class="page-head">
+            <div>
+                <h1>分类管理</h1>
+                <p>维护社区的技术方向与展示顺序。</p>
+            </div>
+            <a class="btn btn-ghost" th:if="${editId != null}" th:href="@{/admin/categories}">取消编辑</a>
+        </div>
+
+        <div class="admin-grid">
+            <section class="panel">
+                <div class="panel-head">
+                    <h2>现有分类</h2>
+                    <span class="muted small" th:text="'共 ' + ${#lists.size(categories)} + ' 个'">数量</span>
+                </div>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th>Slug</th>
+                            <th>简介</th>
+                            <th>排序</th>
+                            <th style="text-align: right;">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="category : ${categories}">
+                            <td><strong th:text="${category.name}">名称</strong></td>
+                            <td><code th:text="${category.slug}">slug</code></td>
+                            <td class="muted" th:text="${category.description}">简介</td>
+                            <td th:text="${category.sortOrder}">0</td>
+                            <td class="actions">
+                                <a class="btn btn-ghost btn-sm"
+                                   th:href="@{/admin/categories(editId=${category.id})}">编辑</a>
+                                <form th:action="@{/admin/categories/{id}/delete(id=${category.id})}"
+                                      method="post" data-confirm="确定删除该分类吗？分类下有帖子时无法删除。">
+                                    <button class="btn btn-danger btn-sm" type="submit">删除</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(categories)}">
+                            <td colspan="5" class="muted">暂无分类</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <aside class="panel">
+                <div class="panel-head">
+                    <h2 th:text="${editId == null ? '新建分类' : '编辑分类'}">新建分类</h2>
+                </div>
+                <div class="panel-body">
+                    <div th:if="${formError}" class="form-error-banner" th:text="${formError}">错误</div>
+                    <form th:action="${editId == null} ? @{/admin/categories} : @{/admin/categories/{id}(id=${editId})}"
+                          th:object="${form}" method="post">
+                        <div class="field">
+                            <label for="name">名称</label>
+                            <input class="input" id="name" type="text" th:field="*{name}"
+                                   placeholder="例如：云原生" maxlength="50">
+                            <div class="field-error" th:if="${#fields.hasErrors('name')}"
+                                 th:errors="*{name}">错误</div>
+                        </div>
+                        <div class="field">
+                            <label for="slug">Slug</label>
+                            <input class="input" id="slug" type="text" th:field="*{slug}"
+                                   placeholder="留空则根据名称生成">
+                            <div class="hint">用于 URL 筛选，例如 cloud-native。</div>
+                            <div class="field-error" th:if="${#fields.hasErrors('slug')}"
+                                 th:errors="*{slug}">错误</div>
+                        </div>
+                        <div class="field">
+                            <label for="description">简介</label>
+                            <input class="input" id="description" type="text" th:field="*{description}"
+                                   placeholder="一句话描述分类内容" maxlength="255">
+                        </div>
+                        <div class="field">
+                            <label for="sortOrder">排序</label>
+                            <input class="input" id="sortOrder" type="number" th:field="*{sortOrder}"
+                                   min="0" max="9999">
+                        </div>
+                        <button class="btn btn-primary btn-block" type="submit"
+                                th:text="${editId == null ? '创建分类' : '保存修改'}">创建分类</button>
+                    </form>
+                </div>
+            </aside>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/common :: footer}"></footer>
+</body>
+</html>

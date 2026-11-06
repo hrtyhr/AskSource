@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
+    <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'}">
+    <title th:text="${title} + ' · AskSource'">AskSource</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/logo.svg}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script th:src="@{/js/app.js}" defer></script>
+</head>
+<body>
+
+<header th:fragment="header" class="site-header">
+    <div class="container header-inner">
+        <a class="brand" th:href="@{/}">
+            <span class="brand-mark">AS</span>
+            <span class="brand-text"><strong>AskSource</strong><small>RAG COMMUNITY</small></span>
+        </a>
+        <nav class="main-nav" aria-label="主导航">
+            <a th:href="@{/}" th:classappend="${currentPath == '/'} ? 'is-active'">首页</a>
+            <a th:href="@{/posts}"
+               th:classappend="${currentPath == '/posts' or (currentPath != null and #strings.startsWith(currentPath, '/posts/'))} ? 'is-active'">帖子</a>
+            <a th:href="@{/ai}" th:classappend="${currentPath == '/ai'} ? 'is-active'">AI 问答</a>
+            <a th:href="@{/ai/search}" th:classappend="${currentPath == '/ai/search'} ? 'is-active'">语义搜索</a>
+        </nav>
+        <form class="nav-search" th:action="@{/search}" method="get" role="search">
+            <input type="search" name="q" autocomplete="off" placeholder="搜索技术帖..." th:value="${q}">
+            <button type="submit" aria-label="搜索">搜索</button>
+        </form>
+        <div class="nav-actions">
+            <th:block th:if="${currentUser != null}">
+                <a class="user-chip" th:href="@{/users/{username}(username=${currentUser.username})}">
+                    <span class="avatar" th:text="${#strings.substring(currentUser.displayName, 0, 1)}">U</span>
+                    <span th:text="${currentUser.displayName}">用户</span>
+                </a>
+                <a class="admin-link" th:if="${currentUser.admin}" th:href="@{/admin}">管理</a>
+                <form th:action="@{/logout}" method="post">
+                    <button class="btn btn-ghost btn-sm" type="submit">退出</button>
+                </form>
+            </th:block>
+            <th:block th:if="${currentUser == null}">
+                <a class="btn btn-ghost btn-sm" th:href="@{/login}">登录</a>
+                <a class="btn btn-primary btn-sm" th:href="@{/register}">注册</a>
+            </th:block>
+        </div>
+    </div>
+</header>
+
+<div th:fragment="flash" class="flash-stack" aria-live="polite">
+    <div th:if="${flashSuccess}" class="flash flash-success" role="status" th:text="${flashSuccess}"></div>
+    <div th:if="${flashError}" class="flash flash-error" role="alert" th:text="${flashError}"></div>
+</div>
+
+<article th:fragment="postCard(post)" class="post-card">
+    <div class="post-card-top">
+        <a class="chip" th:href="@{/posts(category=${post.category.slug})}" th:text="${post.category.name}">分类</a>
+        <time class="muted" th:text="${#temporals.format(post.createdAt, 'MM-dd HH:mm')}">时间</time>
+    </div>
+    <h3 class="post-card-title">
+        <a th:href="@{/posts/{id}(id=${post.id})}" th:text="${post.title}">帖子标题</a>
+    </h3>
+    <p class="post-excerpt"
+       th:text="${T(com.itheima.aiupweb.common.TextUtils).plainSnippet(post.content, 160)}">摘要</p>
+    <div class="tag-row" th:if="${!post.tags.isEmpty()}">
+        <a class="tag" th:each="tag : ${post.tags}"
+           th:href="@{/posts(tag=${tag.slug})}" th:text="'#' + ${tag.name}">#标签</a>
+    </div>
+    <div class="post-card-foot">
+        <a class="author-line" th:href="@{/users/{username}(username=${post.author.username})}">
+            <span class="avatar avatar-sm" th:text="${#strings.substring(post.author.displayName, 0, 1)}">A</span>
+            <span th:text="${post.author.displayName}">作者</span>
+        </a>
+        <span class="post-stats">
+            <span th:text="${post.replyCount} + ' 回复'">0 回复</span>
+            <span th:text="${post.viewCount} + ' 浏览'">0 浏览</span>
+        </span>
+    </div>
+</article>
+
+<nav th:fragment="pagination(pageLinks)" class="pagination"
+     th:if="${pageLinks != null and pageLinks.totalPages > 1}" aria-label="分页">
+    <a th:if="${pageLinks.previousUrl != null}" th:href="${pageLinks.previousUrl}" class="page-link">上一页</a>
+    <a th:each="link : ${pageLinks.links}" th:href="${link.url}" th:text="${link.number + 1}"
+       class="page-link" th:classappend="${link.current} ? 'is-current'">1</a>
+    <a th:if="${pageLinks.nextUrl != null}" th:href="${pageLinks.nextUrl}" class="page-link">下一页</a>
+    <span class="page-total" th:text="'共 ' + ${pageLinks.totalPages} + ' 页'">共 1 页</span>
+</nav>
+
+<nav th:fragment="adminNav" class="container admin-subnav" aria-label="管理导航">
+    <a th:href="@{/admin}" th:classappend="${currentPath == '/admin'} ? 'is-active'">概览</a>
+    <a th:href="@{/admin/posts}" th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/admin/posts')} ? 'is-active'">帖子管理</a>
+    <a th:href="@{/admin/users}" th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/admin/users')} ? 'is-active'">用户管理</a>
+    <a th:href="@{/admin/categories}" th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/admin/categories')} ? 'is-active'">分类管理</a>
+</nav>
+
+<footer th:fragment="footer" class="site-footer">
+    <div class="container footer-inner">
+        <div>
+            <strong>AskSource</strong>
+            <p class="muted">让社区知识可检索、可追问、可沉淀。</p>
+        </div>
+        <div class="footer-links">
+            <a th:href="@{/posts}">技术帖子</a>
+            <a th:href="@{/ai}">AI 助手</a>
+            <a th:href="@{/ai/search}">语义搜索</a>
+            <span>Spring Boot · Spring AI · MySQL · Redis</span>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

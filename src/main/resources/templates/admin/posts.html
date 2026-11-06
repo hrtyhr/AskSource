@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('帖子管理')}"></head>
+<body>
+<header th:replace="~{fragments/common :: header}"></header>
+<nav th:replace="~{fragments/common :: adminNav}"></nav>
+
+<main class="page" style="padding-top: 8px;">
+    <div class="container">
+        <div th:replace="~{fragments/common :: flash}"></div>
+
+        <div class="page-head">
+            <div>
+                <h1>帖子管理</h1>
+                <p>查看、隐藏、恢复或删除社区内容。</p>
+            </div>
+        </div>
+
+        <form class="filter-bar" th:action="@{/admin/posts}" method="get">
+            <div class="row wrap" style="flex: 1;">
+                <input class="input" style="max-width: 320px;" type="search" name="q"
+                       th:value="${q}" placeholder="搜索标题或正文">
+                <select class="select" name="status" style="max-width: 160px;">
+                    <option value="" th:selected="${status == ''}">全部状态</option>
+                    <option value="PUBLISHED" th:selected="${status == 'PUBLISHED'}">公开</option>
+                    <option value="HIDDEN" th:selected="${status == 'HIDDEN'}">隐藏</option>
+                    <option value="DELETED" th:selected="${status == 'DELETED'}">已删除</option>
+                </select>
+                <button class="btn btn-primary btn-sm" type="submit">筛选</button>
+            </div>
+            <span class="muted small" th:text="'共 ' + ${posts.totalElements} + ' 条'">总数</span>
+        </form>
+
+        <section class="panel">
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>标题</th>
+                        <th>分类</th>
+                        <th>作者</th>
+                        <th>状态</th>
+                        <th>回复 / 浏览</th>
+                        <th>发布时间</th>
+                        <th style="text-align: right;">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="post : ${posts.content}">
+                        <td class="title-cell">
+                            <a th:href="@{/posts/{id}(id=${post.id})}" th:text="${post.title}">标题</a>
+                        </td>
+                        <td th:text="${post.category.name}">分类</td>
+                        <td>
+                            <a th:href="@{/users/{u}(u=${post.author.username})}"
+                               th:text="${post.author.displayName}">作者</a>
+                        </td>
+                        <td>
+                            <span class="status-badge"
+                                  th:classappend="' status-' + ${#strings.toLowerCase(post.status.name())}"
+                                  th:text="${post.status}">状态</span>
+                        </td>
+                        <td th:text="${post.replyCount} + ' / ' + ${post.viewCount}">数据</td>
+                        <td th:text="${#temporals.format(post.createdAt, 'MM-dd HH:mm')}">时间</td>
+                        <td class="actions">
+                            <a class="btn btn-ghost btn-sm" th:href="@{/posts/{id}(id=${post.id})}">查看</a>
+                            <form th:if="${post.status.name() == 'PUBLISHED'}"
+                                  th:action="@{/admin/posts/{id}/hide(id=${post.id})}" method="post">
+                                <button class="btn btn-ghost btn-sm" type="submit">隐藏</button>
+                            </form>
+                            <form th:if="${post.status.name() != 'PUBLISHED'}"
+                                  th:action="@{/admin/posts/{id}/restore(id=${post.id})}" method="post">
+                                <button class="btn btn-secondary btn-sm" type="submit">恢复</button>
+                            </form>
+                            <form th:if="${post.status.name() != 'DELETED'}"
+                                  th:action="@{/admin/posts/{id}/delete(id=${post.id})}" method="post"
+                                  data-confirm="确定软删除该帖子吗？">
+                                <button class="btn btn-danger btn-sm" type="submit">删除</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(posts.content)}">
+                        <td colspan="7" class="muted">没有符合条件的帖子</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <nav th:replace="~{fragments/common :: pagination(${pageLinks})}"></nav>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/common :: footer}"></footer>
+</body>
+</html>

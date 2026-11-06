@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head(${profileUser.displayName})}"></head>
+<body>
+<header th:replace="~{fragments/common :: header}"></header>
+
+<main class="page">
+    <div class="container">
+        <div class="profile-head">
+            <span class="avatar avatar-lg"
+                  th:text="${#strings.substring(profileUser.displayName, 0, 1)}">U</span>
+            <div>
+                <h1 th:text="${profileUser.displayName}">用户</h1>
+                <p>
+                    <span th:text="'@' + ${profileUser.username}">@user</span>
+                    <span> · </span>
+                    <span th:text="${profileUser.admin} ? '管理员' : '社区成员'">社区成员</span>
+                    <span> · </span>
+                    <span th:text="'加入于 ' + ${#temporals.format(profileUser.createdAt, 'yyyy-MM-dd')}">加入时间</span>
+                </p>
+                <p th:if="${profileUser.bio != null}" th:text="${profileUser.bio}">简介</p>
+            </div>
+            <div class="profile-stats">
+                <div class="profile-stat">
+                    <strong th:text="${postTotal}">0</strong>
+                    <span>公开帖子</span>
+                </div>
+                <div class="profile-stat">
+                    <strong th:text="${replyTotal}">0</strong>
+                    <span>公开回复</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-grid">
+            <section>
+                <div class="section-head">
+                    <h2>发布的帖子</h2>
+                    <a th:href="@{/posts}">浏览全部</a>
+                </div>
+                <div th:if="${#lists.isEmpty(posts.content)}" class="empty-state"
+                     style="background: #fff; border: 1px solid var(--line); border-radius: var(--radius);">
+                    <h3>还没有公开帖子</h3>
+                    <p>这个用户还没有发布内容。</p>
+                </div>
+                <div th:each="post : ${posts.content}">
+                    <article th:replace="~{fragments/common :: postCard(${post})}"></article>
+                </div>
+                <nav th:replace="~{fragments/common :: pagination(${pageLinks})}"></nav>
+            </section>
+
+            <aside>
+                <div class="section-head">
+                    <h2>最近回复</h2>
+                </div>
+                <div th:if="${#lists.isEmpty(replies)}" class="empty-state side-card">
+                    <p>暂无公开回复。</p>
+                </div>
+                <div class="compact-reply" th:each="reply : ${replies}">
+                    <a class="small" th:href="@{/posts/{id}(id=${reply.post.id})}">
+                        <strong th:text="${reply.post.title}">帖子标题</strong>
+                    </a>
+                    <div class="markdown-body" style="padding-top: 6px; font-size: 0.84rem;"
+                         th:utext="${replyHtml[reply.id]}">回复内容</div>
+                    <div class="muted small" style="margin-top: 6px;"
+                         th:text="${#temporals.format(reply.createdAt, 'yyyy-MM-dd HH:mm')}">时间</div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/common :: footer}"></footer>
+</body>
+</html>

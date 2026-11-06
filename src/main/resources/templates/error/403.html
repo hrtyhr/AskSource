@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('无权访问')}"></head>
+<body>
+<header th:replace="~{fragments/common :: header}"></header>
+<main class="container error-page">
+    <div>
+        <div class="error-code">403</div>
+        <h1>没有访问权限</h1>
+        <p>该操作仅限内容作者或管理员执行。</p>
+        <a class="btn btn-primary" th:href="@{/}">返回首页</a>
+        <a class="btn btn-ghost" th:href="@{/posts}">浏览帖子</a>
+    </div>
+</main>
+<footer th:replace="~{fragments/common :: footer}"></footer>
+</body>
+</html>

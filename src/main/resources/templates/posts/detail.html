@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head(${post.title})}"></head>
+<body>
+<header th:replace="~{fragments/common :: header}"></header>
+
+<main class="page">
+    <div class="container">
+        <div th:replace="~{fragments/common :: flash}"></div>
+
+        <div th:if="${post.status.name() != 'PUBLISHED'}" class="flash flash-error" style="margin-bottom: 18px;">
+            <span th:text="'管理员视图：该帖子当前状态为 ' + ${post.status}">管理员视图</span>
+        </div>
+
+        <div class="article-layout">
+            <div>
+                <article class="article-card">
+                    <header class="article-head">
+                        <div class="row wrap">
+                            <a class="chip" th:href="@{/posts(category=${post.category.slug})}"
+                               th:text="${post.category.name}">分类</a>
+                            <span class="status-badge" th:if="${post.status.name() != 'PUBLISHED'}"
+                                  th:text="${post.status}">状态</span>
+                        </div>
+                        <h1 th:text="${post.title}">帖子标题</h1>
+                        <div class="article-meta">
+                            <a class="author-line" th:href="@{/users/{username}(username=${post.author.username})}">
+                                <span class="avatar avatar-sm"
+                                      th:text="${#strings.substring(post.author.displayName, 0, 1)}">A</span>
+                                <span th:text="${post.author.displayName}">作者</span>
+                            </a>
+                            <span th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">发布时间</span>
+                            <span th:text="${post.viewCount} + ' 次浏览'">浏览</span>
+                            <span th:text="${post.replyCount} + ' 条回复'">回复</span>
+                        </div>
+                        <div class="tag-row" th:if="${!post.tags.isEmpty()}">
+                            <a class="tag" th:each="tag : ${post.tags}"
+                               th:href="@{/posts(tag=${tag.slug})}" th:text="'#' + ${tag.name}">标签</a>
+                        </div>
+                    </header>
+
+                    <div class="markdown-body" th:utext="${contentHtml}">正文</div>
+
+                    <div class="article-actions"
+                         th:if="${currentUser != null and (currentUser.admin or currentUser.username == post.author.username)}">
+                        <a class="btn btn-ghost btn-sm" th:href="@{/posts/{id}/edit(id=${post.id})}">编辑帖子</a>
+                        <form th:action="@{/posts/{id}/delete(id=${post.id})}" method="post"
+                              data-confirm="确定删除这篇帖子吗？删除后不再公开展示。">
+                            <button class="btn btn-danger btn-sm" type="submit">删除帖子</button>
+                        </form>
+                        <form th:if="${isAdmin and post.status.name() == 'PUBLISHED'}"
+                              th:action="@{/admin/posts/{id}/hide(id=${post.id})}" method="post">
+                            <button class="btn btn-ghost btn-sm" type="submit">管理员隐藏</button>
+                        </form>
+                        <form th:if="${isAdmin and post.status.name() == 'HIDDEN'}"
+                              th:action="@{/admin/posts/{id}/restore(id=${post.id})}" method="post">
+                            <button class="btn btn-secondary btn-sm" type="submit">恢复公开</button>
+                        </form>
+                    </div>
+                </article>
+
+                <section class="replies-section" id="replies">
+                    <div class="replies-head">
+                        <h2 th:text="'回复 · ' + ${#lists.size(replies)}">回复</h2>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(replies)}" class="empty-state" style="background: #fff; border: 1px solid var(--line); border-radius: var(--radius);">
+                        <h3>还没有回复</h3>
+                        <p>分享你的经验，成为第一个参与讨论的人。</p>
+                    </div>
+
+                    <article class="reply" th:each="reply : ${replies}" th:id="'reply-' + ${reply.id}">
+                        <span class="avatar" th:text="${#strings.substring(reply.author.displayName, 0, 1)}">A</span>
+                        <div class="reply-main">
+                            <div class="reply-head">
+                                <a class="reply-author"
+                                   th:href="@{/users/{username}(username=${reply.author.username})}">
+                                    <span th:text="${reply.author.displayName}">回复者</span>
+                                </a>
+                                <span class="reply-time"
+                                      th:text="${#temporals.format(reply.createdAt, 'yyyy-MM-dd HH:mm')}">时间</span>
+                            </div>
+                            <div class="reply-content markdown-body" style="padding-top: 0;"
+                                 th:utext="${replyHtml[reply.id]}">回复内容</div>
+
+                            <div class="reply-actions"
+                                 th:if="${currentUser != null and (currentUser.admin or currentUser.username == reply.author.username)}">
+                                <form th:action="@{/posts/{postId}/replies/{replyId}/delete(postId=${post.id}, replyId=${reply.id})}"
+                                      method="post" data-confirm="确定删除这条回复吗？">
+                                    <button class="link-button danger" type="submit">删除</button>
+                                </form>
+                            </div>
+                            <details class="inline-editor"
+                                     th:if="${currentUser != null and (currentUser.admin or currentUser.username == reply.author.username)}">
+                                <summary>编辑回复</summary>
+                                <form th:action="@{/posts/{postId}/replies/{replyId}/edit(postId=${post.id}, replyId=${reply.id})}"
+                                      method="post">
+                                    <textarea class="textarea" name="content" required
+                                              th:text="${reply.content}">回复内容</textarea>
+                                    <div class="form-actions" style="margin-top: 8px;">
+                                        <button class="btn btn-secondary btn-sm" type="submit">保存修改</button>
+                                    </div>
+                                </form>
+                            </details>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="reply-form-card" th:if="${currentUser != null}">
+                    <h2>参与讨论</h2>
+                    <form th:action="@{/posts/{id}/replies(id=${post.id})}" method="post">
+                        <div class="field">
+                            <label for="replyContent">回复内容</label>
+                            <textarea class="textarea" id="replyContent" name="content" data-autogrow
+                                      placeholder="分享你的思路、排查过程或可复现的方案..." required></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" type="submit">发布回复</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="reply-form-card" th:if="${currentUser == null}">
+                    <h2>参与讨论</h2>
+                    <p class="muted" style="margin: 0;">登录后可以回复帖子，并使用社区 AI 助手。
+                        <a th:href="@{/login}">立即登录</a>
+                    </p>
+                </section>
+            </div>
+
+            <aside>
+                <div class="sidebar-card ai-summary-card">
+                    <div class="row between" style="align-items: center;">
+                        <h3 style="margin: 0;">AI 导读</h3>
+                        <span class="ai-status-pill" style="font-size: 0.65rem;"
+                              th:classappend="${!aiAvailable} ? 'is-off'"
+                              th:text="${aiAvailable} ? '可用' : '未配置'">状态</span>
+                    </div>
+
+                    <div th:if="${post.aiSummary != null}">
+                        <div class="markdown-body summary-text" style="padding-top: 12px; font-size: 0.86rem;"
+                             th:utext="${summaryHtml}">总结</div>
+                        <div class="summary-meta">
+                            <span th:text="'更新于 ' + ${#temporals.format(post.summaryUpdatedAt, 'MM-dd HH:mm')}">更新时间</span>
+                            <span th:if="${aiAvailable and currentUser != null}">
+                                <form th:action="@{/posts/{id}/summary(id=${post.id})}" method="post"
+                                      style="display: inline;">
+                                    <input type="hidden" name="force" value="true">
+                                    <button class="link-button" type="submit">重新生成</button>
+                                </form>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div th:if="${post.aiSummary == null}">
+                        <p class="muted small" style="margin-top: 10px;">
+                            让 AI 汇总帖子的问题背景、关键结论、争议点与可执行建议。生成过程可能需要数秒。
+                        </p>
+                        <div th:if="${aiAvailable and currentUser != null}">
+                            <form th:action="@{/posts/{id}/summary(id=${post.id})}" method="post"
+                                  data-confirm="将调用 AI 生成导读，可能需要数秒。继续吗？">
+                                <button class="btn btn-secondary btn-sm btn-block" type="submit">生成 AI 导读</button>
+                            </form>
+                        </div>
+                        <div th:if="${!aiAvailable}">
+                            <div class="muted small" th:text="${aiStatus}">AI 未配置</div>
+                        </div>
+                        <div th:if="${aiAvailable and currentUser == null}">
+                            <a class="btn btn-secondary btn-sm btn-block" th:href="@{/login}">登录后生成</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-card">
+                    <h3>关于作者</h3>
+                    <div class="row">
+                        <span class="avatar"
+                              th:text="${#strings.substring(post.author.displayName, 0, 1)}">A</span>
+                        <div>
+                            <a class="reply-author"
+                               th:href="@{/users/{username}(username=${post.author.username})}"
+                               th:text="${post.author.displayName}">作者</a>
+                            <div class="muted small" th:text="'@' + ${post.author.username}">@user</div>
+                        </div>
+                    </div>
+                    <p class="muted small" style="margin-top: 12px;"
+                       th:text="'加入于 ' + ${#temporals.format(post.author.createdAt, 'yyyy-MM-dd')}">加入时间</p>
+                    <a class="btn btn-ghost btn-sm btn-block" th:href="@{/users/{username}(username=${post.author.username})}">查看主页</a>
+                </div>
+
+                <div class="sidebar-card">
+                    <h3>继续探索</h3>
+                    <p class="muted small">用自然语言描述问题，AI 会从社区中查找相关讨论并给出带引用的回答。</p>
+                    <a class="btn btn-secondary btn-sm btn-block" th:href="@{/ai}">问问社区 AI</a>
+                    <a class="btn btn-ghost btn-sm btn-block" style="margin-top: 8px;"
+                       th:href="@{/ai/search(q=${post.title})}">语义搜索相似内容</a>
+                </div>
+            </aside>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/common :: footer}"></footer>
+</body>
+</html>

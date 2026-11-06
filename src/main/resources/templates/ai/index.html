@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('AI 助手')}"></head>
+<body>
+<header th:replace="~{fragments/common :: header}"></header>
+
+<main class="page">
+    <div class="container">
+        <div th:replace="~{fragments/common :: flash}"></div>
+
+        <div class="ai-shell">
+            <aside class="conversation-panel">
+                <div class="conversation-head">
+                    <h2>我的会话</h2>
+                    <p>对话会持久保存，可随时继续追问。</p>
+                    <a class="btn btn-secondary btn-sm btn-block" style="margin-top: 10px;" th:href="@{/ai}">新对话</a>
+                </div>
+                <div class="conversation-list" id="conversationList">
+                    <div class="conversation-empty" th:if="${#lists.isEmpty(conversations)}">
+                        还没有会话，在右侧提出第一个问题吧。
+                    </div>
+                    <a class="conversation-item" th:each="conversation : ${conversations}"
+                       th:href="@{/ai(conversationId=${conversation.id})}"
+                       th:attr="data-conversation-id=${conversation.id}"
+                       th:classappend="${selectedConversation != null and selectedConversation.id == conversation.id} ? 'is-active'">
+                        <span th:text="${conversation.title}">会话标题</span>
+                        <time th:text="${#temporals.format(conversation.updatedAt, 'MM-dd HH:mm')}">时间</time>
+                    </a>
+                </div>
+            </aside>
+
+            <section class="chat-panel" id="chatPanel"
+                     th:attr="data-conversation-id=${selectedConversation != null ? selectedConversation.id : ''}">
+                <header class="chat-head">
+                    <div>
+                        <h1>AskSource 知识助手</h1>
+                        <p>回答仅基于社区帖子与回复，并标注来源。</p>
+                    </div>
+                    <span class="ai-status-pill" th:classappend="${!aiAvailable} ? 'is-off'"
+                          th:text="${aiAvailable} ? 'AI 在线' : '未配置 Key'">AI 状态</span>
+                </header>
+
+                <div class="chat-messages" id="chatLog">
+                    <div class="chat-welcome" id="chatWelcome" th:if="${#lists.isEmpty(messages)}">
+                        <div>
+                            <h2>从社区知识里找答案</h2>
+                            <p>描述你的技术问题。AI 会检索相似帖子与回复，用流式输出给出回答，并附上可点击的来源。</p>
+                            <div class="prompt-grid">
+                                <button type="button" class="prompt-chip" th:disabled="${!aiAvailable}"
+                                        data-prompt="RAG 的切片策略应该怎么设计？社区里有哪些实践经验？">
+                                    RAG 切片策略有哪些实践经验？
+                                </button>
+                                <button type="button" class="prompt-chip" th:disabled="${!aiAvailable}"
+                                        data-prompt="Spring Boot 社区项目如何做模块化单体？">
+                                    如何组织模块化单体？
+                                </button>
+                                <button type="button" class="prompt-chip" th:disabled="${!aiAvailable}"
+                                        data-prompt="虚拟线程适合替换哪些线程池？有哪些坑？">
+                                    虚拟线程有哪些使用边界？
+                                </button>
+                                <button type="button" class="prompt-chip" th:disabled="${!aiAvailable}"
+                                        data-prompt="MySQL 社区帖子表有哪些分页和关键词搜索优化方案？">
+                                    社区帖子表如何优化查询？
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:each="message : ${messages}" class="message"
+                         th:classappend="${message.role == 'user'} ? 'user'">
+                        <div class="message-avatar" th:text="${message.role == 'user' ? '你' : 'AI'}">AI</div>
+                        <div class="message-body">
+                            <div th:utext="${message.html}">消息内容</div>
+                            <div class="message-sources" th:if="${!#lists.isEmpty(message.sources)}">
+                                <a class="message-source" th:each="source : ${message.sources}"
+                                   th:href="${source.url}"
+                                   th:text="${source.sourceType == 'REPLY' ? '回复 · ' + source.title : '帖子 · ' + source.title}">来源</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-composer">
+                    <div class="ai-unavailable-note" th:if="${!aiAvailable}" th:text="${aiStatus}">
+                        AI 功能暂不可用
+                    </div>
+                    <form id="chatForm" th:attr="data-enabled=${aiAvailable}">
+                        <div class="composer-box">
+                            <textarea id="chatInput" placeholder="输入你的技术问题..." maxlength="2000"
+                                      th:disabled="${!aiAvailable}" required></textarea>
+                            <button class="btn btn-primary" id="sendButton" type="submit"
+                                    th:text="${aiAvailable} ? '发送' : '不可用'"
+                                    th:disabled="${!aiAvailable}">发送</button>
+                        </div>
+                        <div class="composer-hint">
+                            <span th:text="${aiAvailable} ? '回答由 AI 生成，请核对引用来源。' : ${aiStatus}">提示</span>
+                            <span>Enter 发送 · Shift + Enter 换行</span>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/common :: footer}"></footer>
+<script th:src="@{/js/ai.js}" defer></script>
+</body>
+</html>

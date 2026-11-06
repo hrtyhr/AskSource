@@ -1,0 +1,100 @@
+spring:
+  application:
+    name: asksource
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3307/aiupweb?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${MYSQL_USERNAME:aiupweb}
+    password: ${MYSQL_PASSWORD:aiupweb123}
+    hikari:
+      maximum-pool-size: 12
+      minimum-idle: 2
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: Asia/Shanghai
+          batch_size: 30
+        default_batch_fetch_size: 50
+        order_inserts: true
+        order_updates: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6380}
+      password: ${REDIS_PASSWORD:}
+      timeout: 3s
+      client-type: jedis
+  thymeleaf:
+    cache: false
+  ai:
+    openai:
+      base-url: ${DASHSCOPE_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+      api-key: ${DASHSCOPE_API_KEY:not-configured}
+      chat:
+        model: ${DASHSCOPE_CHAT_MODEL:qwen-plus}
+        temperature: 0.3
+        max-tokens: 2048
+        timeout: 90s
+      embedding:
+        model: ${DASHSCOPE_EMBEDDING_MODEL:text-embedding-v4}
+        dimensions: 1024
+        timeout: 30s
+    vectorstore:
+      redis:
+        initialize-schema: true
+        index-name: aiupweb-index
+        prefix: "aiupweb:doc:"
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
+    whitelabel:
+      enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    root: INFO
+    com.itheima.aiupweb: INFO
+    org.springframework.ai: INFO
+    org.hibernate.SQL: WARN
+
+app:
+  ai:
+    enabled: ${AI_ENABLED:true}
+    indexing-enabled: ${AI_INDEXING_ENABLED:true}
+    recover-on-startup: ${AI_RECOVER_ON_STARTUP:true}
+    max-requests-per-hour: 30
+    max-concurrent: 1
+    top-k: 8
+    similarity-threshold: 0.25
+    max-context-chars: 9000
+    history-messages: 8
+    max-summary-chars: 16000
+    chunk-size: 800
+    chunk-overlap: 120
+    indexing-retry-limit: 3
+    stream-timeout: 120s
+    embedding-dimensions: 1024
+  seed:
+    enabled: ${SEED_ENABLED:true}
+  demo:
+    admin-password: ${ADMIN_PASSWORD:Admin@123456}
+    password: ${DEMO_PASSWORD:Demo@123456}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('技术帖子')}"></head>
+<body>
+<header th:replace="~{fragments/common :: header}"></header>
+
+<main class="page">
+    <div class="container">
+        <div th:replace="~{fragments/common :: flash}"></div>
+
+        <div class="page-head">
+            <div>
+                <h1>技术帖子</h1>
+                <p>来自社区的真实工程实践、问题排查与技术讨论。</p>
+            </div>
+            <a class="btn btn-primary" th:if="${currentUser != null}" th:href="@{/posts/new}">发布帖子</a>
+            <a class="btn btn-secondary" th:if="${currentUser == null}" th:href="@{/login}">登录后发帖</a>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter-links">
+                <a th:href="@{/posts(sort=${sort}, tag=${selectedTag})}"
+                   th:classappend="${selectedCategory == null} ? 'is-active'">全部</a>
+                <a th:each="category : ${categories}"
+                   th:href="@{/posts(category=${category.slug}, sort=${sort}, tag=${selectedTag})}"
+                   th:text="${category.name}"
+                   th:classappend="${selectedCategory == category.slug} ? 'is-active'">分类</a>
+            </div>
+            <div class="filter-links">
+                <a th:href="@{/posts(category=${selectedCategory}, tag=${selectedTag}, sort='latest')}"
+                   th:classappend="${sort == 'latest'} ? 'is-active'">最新</a>
+                <a th:href="@{/posts(category=${selectedCategory}, tag=${selectedTag}, sort='hot')}"
+                   th:classappend="${sort == 'hot'} ? 'is-active'">热门</a>
+            </div>
+        </div>
+
+        <div class="row wrap" style="margin-bottom: 16px;" th:if="${selectedTag != null}">
+            <span class="chip" th:text="'正在筛选标签：#' + ${selectedTag}">标签</span>
+            <a class="small" href="/posts">清除标签筛选</a>
+            <span class="muted small" th:if="${q != null}" th:text="'关键词：' + ${q}">关键词</span>
+        </div>
+
+        <div th:if="${#lists.isEmpty(posts.content)}" class="empty-state">
+            <h3>没有找到匹配的帖子</h3>
+            <p>试试调整分类、标签或关键词。</p>
+        </div>
+
+        <div th:each="post : ${posts.content}">
+            <article th:replace="~{fragments/common :: postCard(${post})}"></article>
+        </div>
+
+        <nav th:replace="~{fragments/common :: pagination(${pageLinks})}"></nav>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/common :: footer}"></footer>
+</body>
+</html>

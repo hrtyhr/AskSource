@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('注册')}"></head>
+<body>
+<header th:replace="~{fragments/common :: header}"></header>
+
+<main class="login-shell">
+    <div class="container">
+        <div class="auth-card" style="width: min(540px, 100%);">
+            <span class="eyebrow">JOIN THE COMMUNITY</span>
+            <h1>创建账号</h1>
+            <p class="sub">发布技术实践，参与讨论，并使用基于社区内容的 AI 助手。</p>
+
+            <div th:if="${formError}" class="form-error-banner" th:text="${formError}">注册失败</div>
+
+            <form th:action="@{/register}" th:object="${form}" method="post">
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="username">用户名</label>
+                        <input class="input" id="username" type="text" th:field="*{username}"
+                               autocomplete="username" placeholder="3-32 位字母、数字、下划线">
+                        <div class="field-error" th:if="${#fields.hasErrors('username')}"
+                             th:errors="*{username}">错误</div>
+                    </div>
+                    <div class="field">
+                        <label for="displayName">昵称</label>
+                        <input class="input" id="displayName" type="text" th:field="*{displayName}"
+                               placeholder="展示给其他用户">
+                        <div class="field-error" th:if="${#fields.hasErrors('displayName')}"
+                             th:errors="*{displayName}">错误</div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="email">邮箱</label>
+                    <input class="input" id="email" type="email" th:field="*{email}"
+                           autocomplete="email" placeholder="name@example.com">
+                    <div class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">错误</div>
+                </div>
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="password">密码</label>
+                        <input class="input" id="password" type="password" th:field="*{password}"
+                               autocomplete="new-password" placeholder="至少 8 个字符">
+                        <div class="field-error" th:if="${#fields.hasErrors('password')}"
+                             th:errors="*{password}">错误</div>
+                    </div>
+                    <div class="field">
+                        <label for="confirmPassword">确认密码</label>
+                        <input class="input" id="confirmPassword" type="password" th:field="*{confirmPassword}"
+                               autocomplete="new-password" placeholder="再次输入密码">
+                        <div class="field-error" th:if="${#fields.hasErrors('confirmPassword')}"
+                             th:errors="*{confirmPassword}">错误</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-block" type="submit">注册</button>
+            </form>
+
+            <p class="auth-foot">已有账号？<a th:href="@{/login}">直接登录</a></p>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/common :: footer}"></footer>
+</body>
+</html>

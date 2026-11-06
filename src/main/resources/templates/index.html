@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('首页')}"></head>
+<body>
+<header th:replace="~{fragments/common :: header}"></header>
+
+<main>
+    <section class="hero">
+        <div class="container hero-inner">
+            <div>
+                <span class="eyebrow">RAG · COMMUNITY KNOWLEDGE</span>
+                <h1>社区里的技术答案，<br><span class="gradient">还能继续被追问</span></h1>
+                <p>发布、检索、讨论技术问题。AI 助手基于社区真实内容回答问题，每一条结论都能回到原始帖子与回复。</p>
+                <div class="hero-actions">
+                    <a class="btn btn-primary" th:href="@{/posts}">浏览技术帖</a>
+                    <a class="btn btn-secondary" th:href="@{/ai}">向 AI 助手提问</a>
+                    <a class="btn btn-ghost" th:href="@{/ai/search}">语义搜索</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <strong th:text="${postCount}">0</strong>
+                        <span>公开技术帖</span>
+                    </div>
+                    <div class="hero-stat">
+                        <strong th:text="${#lists.size(categories)}">0</strong>
+                        <span>技术分类</span>
+                    </div>
+                    <div class="hero-stat">
+                        <strong>3</strong>
+                        <span>语义搜索 · 问答 · 导读</span>
+                    </div>
+                </div>
+            </div>
+            <aside class="hero-panel" aria-label="AI 助手示例">
+                <div class="hero-prompt">Spring AI 的 Redis 向量索引怎么初始化？</div>
+                <div class="hero-prompt">虚拟线程适合替换哪些线程池？</div>
+                <div class="hero-answer">
+                    社区中的实践建议使用固定维度的 EmbeddingModel，并让 Redis schema 在启动时完成初始化，避免无 Key 环境触发远程调用。相关讨论来自 2 篇帖子与 3 条回复。<b>[1][2]</b>
+                    <div class="source-pills">
+                        <span class="source-pill">向量索引实践</span>
+                        <span class="source-pill">维度迁移经验</span>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </section>
+
+    <div class="page">
+        <div class="container">
+            <div th:replace="~{fragments/common :: flash}"></div>
+
+            <section class="stack">
+                <div class="section-head">
+                    <h2>按方向探索</h2>
+                    <a th:href="@{/posts}">查看全部帖子</a>
+                </div>
+                <div class="category-grid">
+                    <a class="category-card" th:each="category, stat : ${categories}"
+                       th:href="@{/posts(category=${category.slug})}">
+                        <span class="category-index" th:text="${#numbers.formatInteger(stat.count, 2)}">01</span>
+                        <strong th:text="${category.name}">分类</strong>
+                        <span th:text="${category.description}">分类描述</span>
+                    </a>
+                </div>
+            </section>
+
+            <div class="home-grid" style="margin-top: 32px;">
+                <section>
+                    <div class="section-head">
+                        <h2>最新讨论</h2>
+                        <a th:href="@{/posts(sort='latest')}">更多</a>
+                    </div>
+                    <div th:if="${#lists.isEmpty(latestPosts)}" class="empty-state">
+                        <h3>还没有帖子</h3>
+                        <p>成为第一个分享技术实践的人。</p>
+                    </div>
+                    <div th:each="post : ${latestPosts}">
+                        <article th:replace="~{fragments/common :: postCard(${post})}"></article>
+                    </div>
+                </section>
+
+                <aside>
+                    <div class="side-card ai-side-card">
+                        <h3>AI 知识助手</h3>
+                        <p>基于社区帖子与回复进行检索，用流式回答帮你快速定位答案，并附上可点击来源。</p>
+                        <div th:if="${!aiAvailable}" class="small" style="color: #fec84b; margin-bottom: 10px;"
+                             th:text="${aiStatus}">未配置 API Key</div>
+                        <a class="btn btn-sm" th:href="@{/ai}">开始提问</a>
+                    </div>
+
+                    <div class="side-card">
+                        <h3>本周热门</h3>
+                        <div th:if="${#lists.isEmpty(hotPosts)}" class="muted small">暂无热门帖子</div>
+                        <ol class="hot-list" th:if="${!#lists.isEmpty(hotPosts)}">
+                            <li th:each="post : ${hotPosts}">
+                                <div>
+                                    <a th:href="@{/posts/{id}(id=${post.id})}" th:text="${post.title}">标题</a>
+                                    <span th:text="${post.replyCount} + ' 回复 · ' + ${post.viewCount} + ' 浏览'">数据</span>
+                                </div>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="side-card">
+                        <h3>如何获得更好的回答</h3>
+                        <p class="muted small">描述具体的技术栈、报错信息和已尝试方案。AI 会优先检索社区中的相似讨论，并明确标注资料不足的情况。</p>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/common :: footer}"></footer>
+</body>
+</html>

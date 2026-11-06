@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('请求有误')}"></head>
+<body>
+<header th:replace="~{fragments/common :: header}"></header>
+<main class="container error-page">
+    <div>
+        <div class="error-code">400</div>
+        <h1>请求无法处理</h1>
+        <p th:text="${errorMessage != null ? errorMessage : '提交的内容不完整或格式不正确。'}">请求内容有误。</p>
+        <a class="btn btn-primary" th:href="@{/}">返回首页</a>
+    </div>
+</main>
+<footer th:replace="~{fragments/common :: footer}"></footer>
+</body>
+</html>

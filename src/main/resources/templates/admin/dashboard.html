@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('管理概览')}"></head>
+<body>
+<header th:replace="~{fragments/common :: header}"></header>
+<nav th:replace="~{fragments/common :: adminNav}"></nav>
+
+<main class="page" style="padding-top: 8px;">
+    <div class="container">
+        <div th:replace="~{fragments/common :: flash}"></div>
+
+        <div class="page-head">
+            <div>
+                <h1>管理概览</h1>
+                <p>社区内容、用户与 AI 索引状态。</p>
+            </div>
+            <a class="btn btn-ghost" th:href="@{/posts}">返回社区</a>
+        </div>
+
+        <div class="stat-grid">
+            <div class="stat-card">
+                <span>用户</span>
+                <strong th:text="${userCount}">0</strong>
+                <small th:text="'启用 ' + ${enabledUserCount} + ' 人'">启用人数</small>
+            </div>
+            <div class="stat-card">
+                <span>公开帖子</span>
+                <strong th:text="${publishedCount}">0</strong>
+                <small th:text="'隐藏 ' + ${hiddenCount} + ' · 删除 ' + ${deletedCount}">状态统计</small>
+            </div>
+            <div class="stat-card">
+                <span>回复总量</span>
+                <strong th:text="${replyCount}">0</strong>
+                <small>社区讨论数据</small>
+            </div>
+            <div class="stat-card">
+                <span>AI 会话</span>
+                <strong th:text="${conversationCount}">0</strong>
+                <small>累计持久化会话</small>
+            </div>
+        </div>
+
+        <div class="admin-grid">
+            <section class="panel">
+                <div class="panel-head">
+                    <h2>最近帖子</h2>
+                    <a class="small" th:href="@{/admin/posts}">全部帖子</a>
+                </div>
+                <div class="panel-body no-pad">
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>标题</th>
+                                <th>作者</th>
+                                <th>状态</th>
+                                <th>时间</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="post : ${recentPosts}">
+                                <td class="title-cell">
+                                    <a th:href="@{/posts/{id}(id=${post.id})}" th:text="${post.title}">标题</a>
+                                </td>
+                                <td th:text="${post.author.displayName}">作者</td>
+                                <td>
+                                    <span class="status-badge"
+                                          th:classappend="' status-' + ${#strings.toLowerCase(post.status.name())}"
+                                          th:text="${post.status}">状态</span>
+                                </td>
+                                <td th:text="${#temporals.format(post.createdAt, 'MM-dd HH:mm')}">时间</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(recentPosts)}">
+                                <td colspan="4" class="muted">暂无帖子</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="stack">
+                <section class="panel">
+                    <div class="panel-head">
+                        <h2>AI 索引</h2>
+                        <span class="ai-status-pill" th:classappend="${!aiAvailable} ? 'is-off'"
+                              th:text="${aiAvailable} ? '在线' : '未配置'">状态</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="index-status-list">
+                            <div class="index-status-row">
+                                <span>已索引</span>
+                                <strong class="status-badge status-indexed" th:text="${indexedCount}">0</strong>
+                            </div>
+                            <div class="index-status-row">
+                                <span>处理中</span>
+                                <strong class="status-badge status-pending" th:text="${pendingCount}">0</strong>
+                            </div>
+                            <div class="index-status-row">
+                                <span>失败</span>
+                                <strong class="status-badge status-failed" th:text="${failedCount}">0</strong>
+                            </div>
+                            <div class="index-status-row">
+                                <span>跳过</span>
+                                <strong class="status-badge status-skipped" th:text="${skippedCount}">0</strong>
+                            </div>
+                        </div>
+                        <p class="muted small" style="margin: 12px 0 0;" th:text="${aiStatus}">状态说明</p>
+                        <form th:if="${aiAvailable}" th:action="@{/admin/ai/reindex}" method="post"
+                              data-confirm="将为所有公开帖子重建向量索引，确定继续吗？" style="margin-top: 12px;">
+                            <button class="btn btn-secondary btn-sm btn-block" type="submit">全量重建索引</button>
+                        </form>
+                        <div th:if="${!aiAvailable}" class="muted small" style="margin-top: 12px;">
+                            配置 DASHSCOPE_API_KEY 后可重建索引。
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-head">
+                        <h2>快速入口</h2>
+                    </div>
+                    <div class="panel-body stack" style="gap: 8px;">
+                        <a class="btn btn-ghost btn-sm btn-block" th:href="@{/admin/posts}">管理帖子</a>
+                        <a class="btn btn-ghost btn-sm btn-block" th:href="@{/admin/users}">管理用户</a>
+                        <a class="btn btn-ghost btn-sm btn-block" th:href="@{/admin/categories}">管理分类</a>
+                    </div>
+                </section>
+            </aside>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/common :: footer}"></footer>
+</body>
+</html>
